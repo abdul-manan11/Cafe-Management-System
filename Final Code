@@ -1,0 +1,156 @@
+#include <iostream>   // for input/output
+#include <fstream>    // for file handling
+#include <string>     // to use string type
+using namespace std;
+
+// Total number of items on the menu
+const int MAX_ITEMS = 10;
+
+// Array to store menu item names
+string menuItems[MAX_ITEMS] = {
+    "Tea", "Coffee", "Burger", "Pizza", "Sandwich",
+    "Pasta", "Cold Drink", "Fries", "Cake", "Ice Cream"
+};
+
+// Array to store prices of each item
+float prices[MAX_ITEMS] = { 50, 80, 150, 500, 120, 300, 60, 100, 200, 90 };
+
+// Array to store how many units the customer ordered
+int quantities[MAX_ITEMS];  // values will be initialized to 0
+
+// Function to display the cafe menu
+void displayMenu() {
+    cout << "--------- Cafe Menu ---------\n";
+    for (int i = 0; i < MAX_ITEMS; i++) {
+        cout << i + 1 << ". " << menuItems[i] << " - Rs. " << prices[i] << endl;
+    }
+    cout << "-----------------------------\n";
+}
+
+// Function to take the order from the user
+void takeOrder() {
+    int choice, qty;
+    char more;
+
+    do {
+        displayMenu();  // show the menu
+        cout << "Enter item number to order (1-" << MAX_ITEMS << "): ";
+        cin >> choice;
+
+        // Check if the selected item number is valid
+        if (choice < 1 || choice > MAX_ITEMS) {
+            cout << "Invalid choice.\n";
+            continue;  // skip rest of the loop and ask again
+        }
+
+        cout << "Enter quantity for " << menuItems[choice - 1] << ": ";
+        cin >> qty;
+
+        // Add the quantity to the selected item
+        quantities[choice - 1] += qty;
+
+        cout << "Do you want to order more items? (y/n): ";
+        cin >> more;
+
+    } while (more == 'y' || more == 'Y');  // repeat if user says yes
+}
+
+// Function to calculate and display the bill using pointers
+float calculateBill() {
+    float total = 0;
+    cout << "\n----- Bill Summary -----\n";
+
+    // Use pointers to access the arrays
+    int* qPtr = quantities;     // pointer to quantities array
+    float* pPtr = prices;       // pointer to prices array
+
+    for (int i = 0; i < MAX_ITEMS; i++) {
+        if (*(qPtr + i) > 0) {
+            float itemTotal = *(qPtr + i) * *(pPtr + i);  // quantity * price
+            cout << menuItems[i] << " x " << *(qPtr + i) << " = Rs. " << itemTotal << endl;
+            total += itemTotal;  // add to total bill
+        }
+    }
+
+    cout << "------------------------\n";
+    cout << "Total Bill: Rs. " << total << endl;
+
+    return total;  // return total amount
+}
+
+// Function to save the bill to a file using pointers
+void saveBillToFile(float total) {
+    ofstream file("bills.txt", ios::app);  // open file in append mode
+
+    int* qPtr = quantities;     // pointer to quantities
+    float* pPtr = prices;       // pointer to prices
+
+    file << "------ New Order ------\n";
+    for (int i = 0; i < MAX_ITEMS; i++) {
+        if (*(qPtr + i) > 0) {
+            file << menuItems[i] << " x " << *(qPtr + i)
+                << " = Rs. " << *(qPtr + i) * *(pPtr + i) << endl;
+        }
+    }
+
+    file << "Total = Rs. " << total << "\n\n";
+    file.close();  // close the file
+
+    cout << "Bill saved to 'bills.txt'.\n";
+}
+
+// Function to display all previous orders
+void viewPreviousOrders() {
+    ifstream file("bills.txt");  // open file in read mode
+    string line;
+
+    cout << "\n------ Previous Orders ------\n";
+    while (getline(file, line)) {
+        cout << line << endl;  // print each line of the file
+    }
+    file.close();
+    cout << "-----------------------------\n";
+}
+
+// Main function: the entry point of the program
+int main() {
+    int choice;
+
+    do {
+        // Display main menu options
+        cout << "\n===== Cafe Management System =====\n";
+        cout << "1. Take New Order\n";
+        cout << "2. View Previous Orders\n";
+        cout << "3. Exit\n";
+        cout << "Choose an option: ";
+        cin >> choice;
+
+        switch (choice) {
+        case 1:
+            // Reset all quantities to zero before taking a new order
+            fill(quantities, quantities + MAX_ITEMS, 0);
+
+            takeOrder();  // take order from user
+
+            float total;
+            total = calculateBill();  // show and get total bill
+
+            saveBillToFile(total);  // save bill to file
+            break;
+
+        case 2:
+            viewPreviousOrders();  // show old saved orders
+            break;
+
+        case 3:
+            cout << "Thank you for using Cafe Management System.\n";
+            break;
+
+        default:
+            cout << "Invalid option. Try again.\n";
+        }
+
+    } while (choice != 3);  // repeat menu until user exits
+
+    return 0;
+}
